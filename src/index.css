@@ -1,0 +1,9 @@
+#parent{
+    display: flex;
+    flex-wrap: wrap;
+}
+#parent section{
+    border: 1px solid red;
+    width: 50vw;
+    height: 50vh;
+}
