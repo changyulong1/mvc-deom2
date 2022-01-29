@@ -50,10 +50,21 @@ ul,ol{
     height: 10vw;
     margin-top: 50px;
     margin-left: 50px;
-    transition: all 0.5s;
+    transition:  all 2s;
+ 
+
 }
 #app3 .square.active{
+    /* animation:  dong 0.5s; */
     transform: translateX(20vw);
+ 
+
+}
+@keyframes dong {
+    0%{transform: translateX(0)}
+    100%{
+        transform: translateX(20vw);
+    }
 }
 #app4 .circle{
     border: 1px solid #000;

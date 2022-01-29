@@ -11297,43 +11297,96 @@ module.hot.accept(reloadCSS);
 },{"_css_loader":"C:/Users/admin/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"app1.js":[function(require,module,exports) {
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
 var _jquery = _interopRequireDefault(require("jquery"));
 
 require("./app1.css");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var $bnt1 = (0, _jquery.default)('#button1');
-var $bnt2 = (0, _jquery.default)('#button2');
-var $bnt3 = (0, _jquery.default)('#button3');
-var $bnt4 = (0, _jquery.default)('#button4');
-var $number = (0, _jquery.default)('#number');
-var n = localStorage.getItem('n');
-$number.text(n || 100);
-$bnt1.on('click', function () {
-  var n = parseInt($number.text());
-  n += 1;
-  $number.text(n);
-  localStorage.setItem("n", n);
-});
-$bnt2.on('click', function () {
-  n = parseInt($number.text());
-  n -= 1;
-  $number.text(n);
-  localStorage.setItem("n", n);
-});
-$bnt3.on('click', function () {
-  var n = parseInt($number.text());
-  n *= 2;
-  $number.text(n);
-  localStorage.setItem("n", n);
-});
-$bnt4.on('click', function () {
-  var n = parseInt($number.text());
-  n /= 2;
-  $number.text(n);
-  localStorage.setItem("n", n);
-});
+//m model 负责操作数据的
+var eventBus = (0, _jquery.default)(window);
+var m = {
+  data: {
+    n: parseInt(localStorage.getItem('n')) || 100
+  },
+  create: function create() {},
+  delete: function _delete() {},
+  update: function update(data) {
+    Object.assign(m.data, data);
+    eventBus.trigger('m:update');
+    localStorage.setItem('n', m.data.n);
+  },
+  get: function get() {}
+}; //v view 负责所有ui界面
+
+var v = {
+  el: null,
+  html: "\n    <div>\n    <div class=\"output\">\n        <span id=\"number\">{{n}}</span>\n    </div>\n    <div class=\"count\">\n        <button id=\"puls\">+1</button>\n        <button id=\"reduce\">-1</button>\n        <button id=\"ride\">*2</button>\n        <button id=\"except\">/2</button>\n    </div>\n    </div>\n    ",
+  init: function init(selector) {
+    v.el = (0, _jquery.default)(selector);
+  },
+  reader: function reader(n) {
+    if (v.el.children().length !== 0) {
+      v.el.empty();
+    }
+
+    (0, _jquery.default)(v.html.replace('{{n}}', parseInt(n))).appendTo(v.el);
+  }
+}; //c 控制器 负责其他
+
+var c = {
+  init: function init(selector) {
+    v.init(selector);
+    v.reader(m.data.n);
+    c.addEventListeners();
+    eventBus.on('m:update', function () {
+      v.reader(m.data.n);
+    });
+  },
+  events: {
+    "click #puls": 'puls',
+    "click #reduce": 'reduce',
+    "click #ride": 'ride',
+    "click #except": 'except'
+  },
+  puls: function puls(e) {
+    m.update({
+      n: m.data.n + 1
+    });
+  },
+  reduce: function reduce() {
+    m.update({
+      n: m.data.n - 1
+    });
+  },
+  ride: function ride() {
+    m.update({
+      n: m.data.n * 2
+    });
+  },
+  except: function except() {
+    m.update({
+      n: m.data.n / 2
+    });
+  },
+  addEventListeners: function addEventListeners() {
+    for (var key in c.events) {
+      var fn = c[c.events[key]];
+      var spanIndex = key.indexOf(' ');
+      var event = key.slice(0, spanIndex);
+      var node = key.slice(spanIndex + 1);
+      v.el.on(event, node, fn);
+    }
+  }
+}; // c.init('#app1')
+
+var _default = c;
+exports.default = _default;
 },{"jquery":"../node_modules/jquery/dist/jquery.js","./app1.css":"app1.css"}],"app2.css":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
@@ -11342,22 +11395,80 @@ module.hot.accept(reloadCSS);
 },{"_css_loader":"C:/Users/admin/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"app2.js":[function(require,module,exports) {
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
 var _jquery = _interopRequireDefault(require("jquery"));
 
 require("./app2.css");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var $tab = (0, _jquery.default)('#app2 .tab-bar');
-var $text = (0, _jquery.default)("#app2 .tab-content");
-$tab.on('click', 'li', function (e) {
-  var $li = (0, _jquery.default)(e.currentTarget);
-  $li.addClass('active').siblings().removeClass('active');
-  var index = $li.index();
-  $text.children().eq(index).addClass('active').siblings().removeClass('active');
-  localStorage.setItem('index', index);
-});
-$tab.children().eq(0).trigger('click');
+var eventBus = (0, _jquery.default)(window); //m 负责数据
+
+var m = {
+  data: {
+    index: parseInt(localStorage.getItem('index') || 0)
+  },
+  create: function create() {},
+  delete: function _delete() {},
+  update: function update(data) {
+    Object.assign(m.data, data);
+    v.reader(m.data.index);
+    localStorage.setItem('index', m.data.index);
+  },
+  get: function get() {}
+}; //v负责ui界面
+
+var v = {
+  el: null,
+  html: function html(index) {
+    return "\n        <div>\n        <ol class=\"tab-bar\">\n            <li class=\"".concat(index === 0 ? 'active' : '', "\" data-index=\"0\"><span>111</span></li>\n            <li class=\"").concat(index === 1 ? 'active' : '', "\" data-index=\"1\"><span>222</span></li>\n        </ol>\n        <ol class=\"tab-content\">\n            <li class=\"").concat(index === 0 ? "active" : "", "\">\u5185\u5BB91</li>\n            <li class=\"").concat(index === 1 ? "active" : "", "\">\u5185\u5BB92</li>\n        </ol>\n        </div> \n        ");
+  },
+  init: function init(selector) {
+    v.el = (0, _jquery.default)(selector);
+  },
+  reader: function reader(index) {
+    if (v.el.children().length !== 0) {
+      v.el.empty();
+    }
+
+    (0, _jquery.default)(v.html(index)).appendTo(v.el);
+  }
+}; //c负责其他
+
+var c = {
+  init: function init(selector) {
+    v.init(selector);
+    v.reader(m.data.index);
+    c.addEventListeners();
+    eventBus.on('m:update', function () {
+      v.reader(m.data.index);
+    });
+  },
+  events: {
+    "click .tab-bar>li ": 'puls'
+  },
+  puls: function puls(e) {
+    var index = parseInt(e.currentTarget.dataset.index);
+    m.update({
+      index: index
+    });
+  },
+  addEventListeners: function addEventListeners() {
+    for (var key in c.events) {
+      var fn = c[c.events[key]];
+      var spanIndex = key.indexOf(' ');
+      var event = key.slice(0, spanIndex);
+      var node = key.slice(spanIndex + 1);
+      v.el.on(event, node, fn);
+    }
+  }
+};
+var _default = c;
+exports.default = _default;
 },{"jquery":"../node_modules/jquery/dist/jquery.js","./app2.css":"app2.css"}],"app3.css":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
@@ -11366,17 +11477,76 @@ module.hot.accept(reloadCSS);
 },{"_css_loader":"C:/Users/admin/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"app3.js":[function(require,module,exports) {
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
 require("./app3.css");
 
 var _jquery = _interopRequireDefault(require("jquery"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var $square = (0, _jquery.default)('#app3 .square');
-$square.on('click', function () {
-  console.log(66);
-  $square.toggleClass('active');
-});
+var eventBus = (0, _jquery.default)(window);
+var m = {
+  data: {
+    has: localStorage.getItem('class')
+  },
+  create: function create() {},
+  delete: function _delete() {},
+  update: function update(data) {
+    Object.assign(m.data, data);
+    eventBus.trigger('m:update');
+    localStorage.setItem('class', m.data.has);
+  },
+  get: function get() {}
+};
+var v = {
+  el: null,
+  html: function html(has) {
+    return "\n        <div>\n            <div class=\"square ".concat(has === "yes" ? "active" : "", "\"></div>\n        </div>\n");
+  },
+  init: function init(selector) {
+    v.el = (0, _jquery.default)(selector);
+  },
+  reader: function reader(has) {
+    if (v.el.children().length !== 0) {
+      v.el.empty();
+    }
+
+    (0, _jquery.default)(v.html(has)).appendTo(v.el);
+  }
+};
+var c = {
+  init: function init(selector) {
+    v.init(selector);
+    v.reader(m.data.has);
+    c.addEventListeners();
+    eventBus.on('m:update', function () {
+      v.reader(m.data.has);
+    });
+  },
+  events: {
+    "click .square": 'fn'
+  },
+  fn: function fn() {
+    m.update({
+      has: m.data.has === "yes" ? "no" : "yes"
+    });
+  },
+  addEventListeners: function addEventListeners() {
+    for (var key in c.events) {
+      var fn = c[c.events[key]];
+      var spanIndex = key.indexOf(' ');
+      var event = key.slice(0, spanIndex);
+      var node = key.slice(spanIndex + 1);
+      v.el.on(event, node, fn);
+    }
+  }
+};
+var _default = c;
+exports.default = _default;
 },{"./app3.css":"app3.css","jquery":"../node_modules/jquery/dist/jquery.js"}],"app4.css":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
@@ -11391,13 +11561,47 @@ var _jquery = _interopRequireDefault(require("jquery"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var $circle = (0, _jquery.default)('#app4 .circle');
-$circle.on('mouseenter', function () {
-  $circle.addClass('active');
-});
-$circle.on('mouseleave', function () {
-  $circle.removeClass('active');
-});
+var v = {
+  el: null,
+  html: "\n    <div>\n        <div class=\"circle\"></div>\n    </div>\n    ",
+  init: function init(selector) {
+    v.el = (0, _jquery.default)(selector);
+  },
+  reader: function reader(n) {
+    if (v.el.children().length !== 0) {
+      v.el.empty();
+    }
+
+    (0, _jquery.default)(v.html).appendTo(v.el);
+  }
+};
+var c = {
+  init: function init(selector) {
+    v.init(selector);
+    v.reader();
+    c.addEventListeners();
+  },
+  events: {
+    "mouseenter .circle": 'fn1',
+    "mouseleave .circle": 'fn2'
+  },
+  fn1: function fn1() {
+    (0, _jquery.default)(this).addClass('active');
+  },
+  fn2: function fn2() {
+    (0, _jquery.default)(this).removeClass('active');
+  },
+  addEventListeners: function addEventListeners() {
+    for (var key in c.events) {
+      var fn = c[c.events[key]];
+      var spanIndex = key.indexOf(' ');
+      var event = key.slice(0, spanIndex);
+      var node = key.slice(spanIndex + 1);
+      v.el.on(event, node, fn);
+    }
+  }
+};
+c.init('#app4');
 },{"./app4.css":"app4.css","jquery":"../node_modules/jquery/dist/jquery.js"}],"main.js":[function(require,module,exports) {
 "use strict";
 
@@ -11405,13 +11609,21 @@ require("./rest.css");
 
 require("./index.css");
 
-require("./app1.js");
+var _app = _interopRequireDefault(require("./app1.js"));
 
-require("./app2.js");
+var _app2 = _interopRequireDefault(require("./app2.js"));
 
-require("./app3.js");
+var _app3 = _interopRequireDefault(require("./app3.js"));
 
 require("./app4.js");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+_app.default.init('#app1');
+
+_app2.default.init('#app2');
+
+_app3.default.init('#app3');
 },{"./rest.css":"rest.css","./index.css":"index.css","./app1.js":"app1.js","./app2.js":"app2.js","./app3.js":"app3.js","./app4.js":"app4.js"}],"C:/Users/admin/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -11440,7 +11652,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61433" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64566" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
